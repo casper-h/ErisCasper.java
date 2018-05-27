@@ -5,6 +5,7 @@ import com.github.princesslana.eriscasper.data.resource.Channel;
 import com.github.princesslana.eriscasper.data.resource.Message;
 import com.github.princesslana.eriscasper.data.resource.User;
 import com.github.princesslana.eriscasper.rest.channel.CreateMessageRequest;
+import com.github.princesslana.eriscasper.rest.channel.EditMessageRequest;
 import com.github.princesslana.eriscasper.rest.channel.GetChannelMessagesRequest;
 import com.github.princesslana.eriscasper.rest.channel.GetReactionsRequest;
 import com.github.princesslana.eriscasper.rest.channel.ModifyChannelRequest;
@@ -47,11 +48,11 @@ public class ChannelRoute {
    * @see <a href="https://discordapp.com/developers/docs/resources/channel#get-channel-messages">
    *     https://discordapp.com/developers/docs/resources/channel#get-channel-messages</a>
    */
-  public Route<GetChannelMessagesRequest, ImmutableList<Channel>> getChannelMessages() {
+  public Route<GetChannelMessagesRequest, ImmutableList<Message>> getChannelMessages() {
     return Route.get(
         path("/"),
         GetChannelMessagesRequest::toQueryString,
-        Route.jsonArrayResponse(Channel.class));
+        Route.jsonArrayResponse(Message.class));
   }
 
   /**
@@ -116,6 +117,32 @@ public class ChannelRoute {
    */
   public Route<Void, Void> deleteAllReactions(Snowflake messageId) {
     return Route.delete(path("/messages/%s/reactions", messageId.unwrap()), Void.class);
+  }
+
+  /**
+   * @see <a href="https://discordapp.com/developers/docs/resources/channel#edit-message">
+   *     https://discordapp.com/developers/docs/resources/channel#edit-message</a>
+   */
+  public Route<EditMessageRequest, Message> editMessage(Snowflake messageId) {
+    return Route.patch(
+        path("/messages/%s", messageId.unwrap()), EditMessageRequest.class, Message.class);
+  }
+
+  /**
+   * @see <a href="https://discordapp.com/developers/docs/resources/channel#delete-message">
+   *     https://discordapp.com/developers/docs/resources/channel#delete-message</a>
+   */
+  public Route<Void, Void> deleteMessage(Snowflake messageId) {
+    return Route.delete(path("/messages/%s", messageId.unwrap()), Void.class);
+  }
+
+  /**
+   * @see <a href="https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages">
+   *     https://discordapp.com/developers/docs/resources/channel#bulk-delete-messages</a>
+   */
+  public Route<ImmutableList<Snowflake>, Void> bulkDeleteMessages() {
+    return Route.post(
+        path("/messages/bulk-delete"), Route.<Snowflake>jsonArrayRequstBody(), Route.noResponse());
   }
 
   private String path(String fmt, String... args) {

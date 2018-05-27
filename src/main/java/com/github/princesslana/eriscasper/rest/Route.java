@@ -29,6 +29,7 @@ public class Route<Rq, Rs> {
   protected static enum HttpMethod {
     DELETE("DELETE", Content.QUERY_STRING),
     GET("GET", Content.QUERY_STRING),
+    PATCH("PATCH", Content.BODY),
     POST("POST", Content.BODY),
     PUT("PUT", Content.BODY);
 
@@ -127,6 +128,14 @@ public class Route<Rq, Rs> {
     return rq -> JACKSON.writeValueAsString(rq);
   }
 
+  public static <Rq> Function<ImmutableList<Rq>, String> jsonArrayRequstBody() {
+    return jsonRequestBody();
+  }
+
+  public static Function<Response, Void> noResponse() {
+    return rs -> null;
+  }
+
   private static <Rs> Function<Response, Rs> jsonResponse(Class<Rs> rs) {
     return r -> Data.fromJson(r.body().string(), rs);
   }
@@ -145,7 +154,7 @@ public class Route<Rq, Rs> {
   }
 
   public static <Rs> Route<Void, Rs> get(String path, Class<Rs> rsClass) {
-    return new Route<Void, Rs>(HttpMethod.GET, path, noContent(), jsonResponse(rsClass));
+    return get(path, noContent(), jsonResponse(rsClass));
   }
 
   public static <Rq, Rs> Route<Rq, Rs> get(
@@ -153,8 +162,17 @@ public class Route<Rq, Rs> {
     return new Route<Rq, Rs>(HttpMethod.GET, path, rqHandler, rsHandler);
   }
 
+  public static <Rq, Rs> Route<Rq, Rs> patch(String path, Class<Rq> rqClass, Class<Rs> rsClass) {
+    return new Route<Rq, Rs>(HttpMethod.PATCH, path, jsonRequestBody(), jsonResponse(rsClass));
+  }
+
   public static <Rq, Rs> Route<Rq, Rs> post(String path, Class<Rq> rqClass, Class<Rs> rsClass) {
-    return new Route<Rq, Rs>(HttpMethod.POST, path, jsonRequestBody(), jsonResponse(rsClass));
+    return post(path, jsonRequestBody(), jsonResponse(rsClass));
+  }
+
+  public static <Rq, Rs> Route<Rq, Rs> post(
+      String path, Function<Rq, String> rqHandler, Function<Response, Rs> rsHandler) {
+    return new Route<Rq, Rs>(HttpMethod.POST, path, rqHandler, rsHandler);
   }
 
   public static <Rq, Rs> Route<Rq, Rs> put(String path, Class<Rq> rqClass, Class<Rs> rsClass) {
